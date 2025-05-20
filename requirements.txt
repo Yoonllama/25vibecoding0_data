@@ -1,2 +1,4 @@
 folium
 yfinance
+plotly
+streamlit_folium
