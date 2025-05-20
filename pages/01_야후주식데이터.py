@@ -28,8 +28,15 @@ start_date = end_date - timedelta(days=365)
 @st.cache_data
 def fetch_data(ticker):
     data = yf.download(ticker, start=start_date, end=end_date)
+    # 'Adj Close' 컬럼만 사용하고 단일 컬럼으로 정리
+    if 'Adj Close' in data.columns:
+        data = data[['Adj Close']]
+    elif ('Adj Close', '') in data.columns:  # MultiIndex 대응
+        data = data[('Adj Close', '')]
+        data = data.to_frame(name='Adj Close')
     data['Symbol'] = ticker
     return data
+
 
 # 모든 데이터 가져오기
 data_dict = {}
@@ -42,12 +49,13 @@ for name, ticker in top10_tickers.items():
 # Plotly 시각화
 fig = go.Figure()
 for company, df in data_dict.items():
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['Adj Close'],
-        mode='lines',
-        name=company
-    ))
+    if 'Adj Close' in df.columns:
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df['Adj Close'],
+            mode='lines',
+            name=company
+        ))
 
 fig.update_layout(
     title="글로벌 시가총액 상위 10개 기업의 주가 변화 (최근 1년)",
